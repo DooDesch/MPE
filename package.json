@@ -1,14 +1,14 @@
 {
   "name": "xakiitoh-program-executor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ein moderner Programm-Launcher für xAkiitoh's Stream Tools",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:vue\" \"wait-on http://localhost:5176 && npm run dev:electron\"",
-    "dev:vue": "vite --port 5176",
+    "dev:vue": "vite --port 5176 --host",
     "dev:electron": "cross-env NODE_ENV=development electron .",
     "build": "npm run build:vue && npm run build:electron",
-    "build:vue": "vue-tsc && vite build",
+    "build:vue": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
@@ -44,11 +44,18 @@
     "appId": "com.xakiitoh.program-executor",
     "productName": "xAkiitoh Program Executor",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "assets"
     },
     "files": [
       "dist/**/*",
-      "node_modules/**/*"
+      "electron/**/*",
+      "Programs/**/*",
+      "!electron/**/*.ts",
+      "package.json"
+    ],
+    "extraResources": [
+      "Programs/**/*"
     ],
     "win": {
       "target": [
@@ -58,11 +65,14 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "icon": "assets/icon.ico"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }

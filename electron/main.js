@@ -14,7 +14,12 @@ let programManager
 class ProgramManager {
   constructor() {
     this.runningPrograms = new Map()
-    this.programsPath = path.join(__dirname, '../Programs')
+    // In packaged app, Programs folder is in extraResources
+    if (app.isPackaged) {
+      this.programsPath = path.join(process.resourcesPath, 'Programs')
+    } else {
+      this.programsPath = path.join(__dirname, '../Programs')
+    }
   }
 
   async scanPrograms() {
@@ -216,10 +221,16 @@ function createWindow() {
 
   // Load the app
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5177')  // Updated port to match Vite
+    mainWindow.loadURL('http://localhost:5176')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+    // In production, the files are in dist/renderer
+    const isDev = !app.isPackaged
+    if (isDev) {
+      mainWindow.loadFile(path.join(__dirname, '../dist/renderer/index.html'))
+    } else {
+      mainWindow.loadFile(path.join(__dirname, '../dist/renderer/index.html'))
+    }
   }
 
   mainWindow.once('ready-to-show', () => {
