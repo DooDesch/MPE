@@ -78,6 +78,49 @@ class ProgramManager {
     return null
   }
 
+  async findPythonExecutable() {
+    const pythonCommands = ['python3', 'python', 'py']
+    
+    for (const cmd of pythonCommands) {
+      try {
+        // Test if the command exists and check version
+        const testProcess = spawn(cmd, ['--version'], { 
+          stdio: 'pipe', 
+          shell: true,
+          timeout: 5000 
+        })
+        
+        await new Promise((resolve, reject) => {
+          let output = ''
+          testProcess.stdout?.on('data', (data) => {
+            output += data.toString()
+          })
+          testProcess.stderr?.on('data', (data) => {
+            output += data.toString()
+          })
+          testProcess.on('close', (code) => {
+            if (code === 0 && output.includes('Python')) {
+              console.log(`Found Python: ${cmd} - ${output.trim()}`)
+              resolve(cmd)
+            } else {
+              reject(new Error(`${cmd} not found or invalid`))
+            }
+          })
+          testProcess.on('error', reject)
+        })
+        
+        return cmd // Return the first working python command
+      } catch (error) {
+        console.log(`${cmd} not available: ${error.message}`)
+        continue
+      }
+    }
+    
+    // Fallback to 'python' if none worked
+    console.log('No Python found, using fallback: python')
+    return 'python'
+  }
+
   async startProgram(program) {
     const id = `${program.name}_${Date.now()}`
     
@@ -101,7 +144,8 @@ class ProgramManager {
         args = [program.main || 'index.js']
       }
     } else {
-      command = 'python'
+      // Try to find the best Python executable
+      command = await this.findPythonExecutable()
       args = ['-u', program.main || 'main.py']  // -u flag for unbuffered output
     }
 
