@@ -3,6 +3,7 @@
     <Header
       @refresh="refreshPrograms"
       @open-folder="openProgramsFolder"
+      @restore-examples="restoreExamples"
       :loading="loading"
     />
 
@@ -144,6 +145,21 @@ const openProgramsFolder = async () => {
     await window.electronAPI.openProgramsFolder();
   } catch (error) {
     console.error("Fehler beim Öffnen des Ordners:", error);
+  }
+};
+
+const restoreExamples = async () => {
+  try {
+    const success = await window.electronAPI.restoreExamples();
+    if (success) {
+      alert("Beispielprogramme wurden erfolgreich wiederhergestellt!");
+      await refreshPrograms();
+    } else {
+      alert("Keine Beispielprogramme zum Wiederherstellen gefunden.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Wiederherstellen der Beispiele:", error);
+    alert("Fehler beim Wiederherstellen der Beispielprogramme.");
   }
 };
 

@@ -14,12 +14,86 @@ let programManager
 class ProgramManager {
   constructor() {
     this.runningPrograms = new Map()
-    // In packaged app, Programs folder is in extraResources
+    // Initialize Programs folder with smart handling
+    this.initializeProgramsFolder()
+  }
+
+  initializeProgramsFolder() {
     if (app.isPackaged) {
-      this.programsPath = path.join(process.resourcesPath, 'Programs')
+      // In packaged app: User Programs in AppData, Examples in resources
+      const userDataPath = app.getPath('userData')
+      this.programsPath = path.join(userDataPath, 'Programs')
+      this.examplesPath = path.join(process.resourcesPath, 'Programs-Examples')
+      
+      // Create user Programs folder if it doesn't exist
+      if (!fs.existsSync(this.programsPath)) {
+        fs.mkdirSync(this.programsPath, { recursive: true })
+        
+        // Copy examples to user folder only on first installation
+        if (fs.existsSync(this.examplesPath)) {
+          this.copyExamplesToUserFolder()
+        }
+      }
     } else {
+      // In development: Use local Programs folder
       this.programsPath = path.join(__dirname, '../Programs')
     }
+  }
+
+  copyExamplesToUserFolder() {
+    try {
+      const examples = fs.readdirSync(this.examplesPath, { withFileTypes: true })
+      
+      for (const example of examples) {
+        if (example.isDirectory()) {
+          const sourcePath = path.join(this.examplesPath, example.name)
+          const destPath = path.join(this.programsPath, example.name)
+          
+          // Only copy if destination doesn't exist (preserve user programs)
+          if (!fs.existsSync(destPath)) {
+            this.copyDirectoryRecursive(sourcePath, destPath)
+            console.log(`Copied example: ${example.name}`)
+          }
+        } else {
+          // Copy files too (like README.md)
+          const sourcePath = path.join(this.examplesPath, example.name)
+          const destPath = path.join(this.programsPath, example.name)
+          
+          if (!fs.existsSync(destPath)) {
+            fs.copyFileSync(sourcePath, destPath)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error copying examples:', error)
+    }
+  }
+
+  copyDirectoryRecursive(source, destination) {
+    if (!fs.existsSync(destination)) {
+      fs.mkdirSync(destination, { recursive: true })
+    }
+
+    const files = fs.readdirSync(source, { withFileTypes: true })
+    
+    for (const file of files) {
+      const sourcePath = path.join(source, file.name)
+      const destPath = path.join(destination, file.name)
+      
+      if (file.isDirectory()) {
+        this.copyDirectoryRecursive(sourcePath, destPath)
+      } else {
+        fs.copyFileSync(sourcePath, destPath)
+      }
+    }
+  }
+
+  restoreExamples() {
+    if (app.isPackaged && fs.existsSync(this.examplesPath)) {
+      this.copyExamplesToUserFolder()
+      return true
+    }
+    return false
   }
 
   async scanPrograms() {
@@ -314,14 +388,11 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('open-programs-folder', () => {
-    // Use the same logic as ProgramManager for finding Programs folder
-    let programsPath
-    if (app.isPackaged) {
-      programsPath = path.join(process.resourcesPath, 'Programs')
-    } else {
-      programsPath = path.join(__dirname, '../Programs')
-    }
-    shell.openPath(programsPath)
+    shell.openPath(programManager.programsPath)
+  })
+
+  ipcMain.handle('restore-examples', () => {
+    return programManager.restoreExamples()
   })
 })
 

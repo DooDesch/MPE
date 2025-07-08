@@ -11,6 +11,7 @@ const electronAPI = {
   
   // System
   openProgramsFolder: () => ipcRenderer.invoke('open-programs-folder'),
+  restoreExamples: () => ipcRenderer.invoke('restore-examples'),
   
   // Event listeners
   onProgramOutput: (callback) => {
