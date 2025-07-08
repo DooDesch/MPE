@@ -1,4 +1,101 @@
-# Production Build Fix - Version 1.0.1
+# Production Build Fix - Version 1.0.2
+
+## Problem in v1.0.1
+
+Die App startete korrekt, aber der "Programs Folder öffnen" Button führte zu einem Fehler:
+
+```
+"C:\Users\...\app.asar\Programs" konnte nicht gefunden werden.
+```
+
+## Root Cause
+
+- Der Programs-Ordner war fälschlicherweise im `app.asar` enthalten
+- `extraResources` war nicht korrekt konfiguriert
+- Der "Open Programs Folder" Handler verwendete falsche Pfade
+
+## Fixes in v1.0.2
+
+### 1. Korrekte extraResources Konfiguration
+
+**File: `package.json`**
+
+```json
+// BEFORE
+"files": [
+  "Programs/**/*"  // ❌ Programs im app.asar
+],
+"extraResources": [
+  "Programs/**/*"
+]
+
+// AFTER
+"files": [
+  // Programs NICHT in files! ✅
+],
+"extraResources": [
+  {
+    "from": "Programs",
+    "to": "Programs",
+    "filter": ["**/*"]
+  }
+]
+```
+
+### 2. Smart Programs Folder Opening
+
+**File: `electron/main.js`**
+
+```javascript
+// BEFORE
+ipcMain.handle("open-programs-folder", () => {
+  shell.openPath(path.join(__dirname, "../Programs")); // ❌ Funktioniert nur in dev
+});
+
+// AFTER
+ipcMain.handle("open-programs-folder", () => {
+  let programsPath;
+  if (app.isPackaged) {
+    programsPath = path.join(process.resourcesPath, "Programs"); // ✅ Korrekt für Produktion
+  } else {
+    programsPath = path.join(__dirname, "../Programs"); // ✅ Korrekt für Development
+  }
+  shell.openPath(programsPath);
+});
+```
+
+## File Structure in Packaged App
+
+```
+C:\Users\...\Local\Programs\xAkiitoh Program Executor\
+├── xAkiitoh Program Executor.exe
+└── resources\
+    ├── app.asar              // ✅ NUR App-Code, KEINE Programs
+    └── Programs\             // ✅ Programs als extraResource
+        ├── Example-InputTest\
+        ├── Example-StreamStats\
+        └── Example-TwitchBot\
+```
+
+## Installation v1.0.2
+
+1. **Deinstalliere** v1.0.1
+2. **Installiere** v1.0.2:
+   ```
+   xAkiitoh Program Executor Setup 1.0.2.exe
+   ```
+
+## Verbesserungen in v1.0.2
+
+- ✅ "Programs Folder öffnen" Button funktioniert
+- ✅ Programme werden korrekt aus extraResources geladen
+- ✅ Bessere Trennung zwischen App-Code und User-Programmen
+- ✅ Kleinere app.asar (ohne Programs-Ordner)
+- ✅ Einfachere Updates möglich (Programs-Ordner bleibt erhalten)
+
+Die App ist jetzt vollständig funktionsfähig! 🎮✨
+
+# Previous Fixes (v1.0.1)
 
 ## Problem
 

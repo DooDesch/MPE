@@ -270,7 +270,14 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('open-programs-folder', () => {
-    shell.openPath(path.join(__dirname, '../Programs'))
+    // Use the same logic as ProgramManager for finding Programs folder
+    let programsPath
+    if (app.isPackaged) {
+      programsPath = path.join(process.resourcesPath, 'Programs')
+    } else {
+      programsPath = path.join(__dirname, '../Programs')
+    }
+    shell.openPath(programsPath)
   })
 })
 
