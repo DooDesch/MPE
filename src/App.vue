@@ -1,0 +1,195 @@
+<template>
+  <div class="app">
+    <Header
+      @refresh="refreshPrograms"
+      @open-folder="openProgramsFolder"
+      :loading="loading"
+    />
+
+    <div class="main-content">
+      <Sidebar
+        :programs="programs"
+        :running-programs="runningPrograms"
+        @start-program="startProgram"
+        @stop-program="stopProgram"
+        @select-program="selectProgram"
+        :selected-program="selectedProgram"
+      />
+
+      <TerminalArea
+        :selected-program="selectedProgram"
+        :output="programOutput"
+        @send-input="sendInput"
+      />
+    </div>
+
+    <StatusBar
+      :running-count="runningPrograms.length"
+      :total-count="programs.length"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue";
+import Header from "./components/Header.vue";
+import Sidebar from "./components/Sidebar.vue";
+import TerminalArea from "./components/TerminalArea.vue";
+import StatusBar from "./components/StatusBar.vue";
+
+interface Program {
+  name: string;
+  path: string;
+  type: "nodejs" | "python";
+  description?: string;
+  main?: string;
+}
+
+interface RunningProgram {
+  id: string;
+  name: string;
+}
+
+interface ProgramOutput {
+  id: string;
+  output: string;
+  type: "stdout" | "stderr";
+}
+
+const programs = ref<Program[]>([]);
+const runningPrograms = ref<RunningProgram[]>([]);
+const selectedProgram = ref<RunningProgram | null>(null);
+const programOutput = ref<string[]>([]);
+const loading = ref(false);
+
+const refreshPrograms = async () => {
+  loading.value = true;
+  try {
+    programs.value = await window.electronAPI.scanPrograms();
+    runningPrograms.value = await window.electronAPI.getRunningPrograms();
+  } catch (error) {
+    console.error("Fehler beim Laden der Programme:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const startProgram = async (program: Program) => {
+  try {
+    // Create a clean object to avoid cloning issues
+    const cleanProgram = {
+      name: program.name,
+      path: program.path,
+      type: program.type,
+      description: program.description,
+      main: program.main,
+    };
+
+    const id = await window.electronAPI.startProgram(cleanProgram);
+    await refreshPrograms();
+
+    // Automatically select the newly started program
+    const newProgram = runningPrograms.value.find(
+      (p: RunningProgram) => p.id === id
+    );
+    if (newProgram) {
+      selectProgram(newProgram);
+    }
+  } catch (error) {
+    console.error("Fehler beim Starten des Programms:", error);
+  }
+};
+
+const stopProgram = async (id: string) => {
+  try {
+    await window.electronAPI.stopProgram(id);
+    await refreshPrograms();
+
+    // Clear selection if the stopped program was selected
+    if (selectedProgram.value?.id === id) {
+      selectedProgram.value = null;
+      programOutput.value = [];
+    }
+  } catch (error) {
+    console.error("Fehler beim Stoppen des Programms:", error);
+  }
+};
+
+const selectProgram = async (program: RunningProgram) => {
+  selectedProgram.value = program;
+  try {
+    programOutput.value = await window.electronAPI.getProgramOutput(program.id);
+  } catch (error) {
+    console.error("Fehler beim Laden der Ausgabe:", error);
+  }
+};
+
+const sendInput = async (input: string) => {
+  if (selectedProgram.value) {
+    try {
+      await window.electronAPI.sendInput(selectedProgram.value.id, input);
+    } catch (error) {
+      console.error("Fehler beim Senden der Eingabe:", error);
+    }
+  }
+};
+
+const openProgramsFolder = async () => {
+  try {
+    await window.electronAPI.openProgramsFolder();
+  } catch (error) {
+    console.error("Fehler beim Öffnen des Ordners:", error);
+  }
+};
+
+// Event listeners
+const handleProgramOutput = (data: ProgramOutput) => {
+  if (selectedProgram.value?.id === data.id) {
+    programOutput.value.push(`[${data.type.toUpperCase()}] ${data.output}`);
+  }
+};
+
+const handleProgramClosed = (data: { id: string; code: number }) => {
+  if (selectedProgram.value?.id === data.id) {
+    programOutput.value.push(`[INFO] Programm beendet mit Code: ${data.code}`);
+  }
+  refreshPrograms();
+};
+
+const handleProgramError = (data: { id: string; error: string }) => {
+  if (selectedProgram.value?.id === data.id) {
+    programOutput.value.push(`[ERROR] ${data.error}`);
+  }
+};
+
+onMounted(async () => {
+  await refreshPrograms();
+
+  // Set up event listeners
+  window.electronAPI.onProgramOutput(handleProgramOutput);
+  window.electronAPI.onProgramClosed(handleProgramClosed);
+  window.electronAPI.onProgramError(handleProgramError);
+});
+
+onUnmounted(() => {
+  // Clean up event listeners
+  window.electronAPI.removeAllListeners("program-output");
+  window.electronAPI.removeAllListeners("program-closed");
+  window.electronAPI.removeAllListeners("program-error");
+});
+</script>
+
+<style scoped>
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%);
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+</style>

@@ -1,0 +1,16 @@
+{
+  "name": "xakiitoh-twitch-bot",
+  "version": "1.0.0",
+  "description": "Beispiel Twitch Bot für xAkiitoh's Stream",
+  "main": "index.js",
+  "scripts": {
+    "start": "chcp 65001 >nul 2>&1 && node index.js",
+    "dev": "chcp 65001 >nul 2>&1 && node index.js"
+  },
+  "keywords": [
+    "twitch",
+    "bot",
+    "streaming"
+  ],
+  "author": "xAkiitoh Stream Tools"
+}

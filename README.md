@@ -1,0 +1,136 @@
+# xAkiitoh Program Executor
+
+Ein moderner Programm-Launcher für xAkiitoh's Stream Tools, entwickelt mit Electron, Vue 3 und TypeScript.
+
+## ✨ Features
+
+- 🚀 **Moderne Benutzeroberfläche** - Schönes, dunkles Design mit Gradient-Effekten
+- 📁 **Automatische Programm-Erkennung** - Scannt automatisch den Programs-Ordner
+- 🖥️ **Multi-Terminal Support** - Jedes Programm läuft in einem eigenen Terminal
+- ⌨️ **Interaktive Eingabe** - Unterstützt Benutzereingaben in laufende Programme
+- 🔄 **Echtzeit-Status** - Live-Updates für Programm-Status und Ausgaben
+- 🎮 **Streamer-Optimiert** - Perfekt für Live-Streaming und Content-Creation
+
+## 🛠️ Unterstützte Programmtypen
+
+### Node.js Programme
+
+- Automatische Erkennung durch `package.json`
+- Unterstützt `npm start`, `npm run dev` und direkte Ausführung
+- Beispiel: Twitch-Bots, Web-Server, Chat-Tools
+
+### Python Programme
+
+- Automatische Erkennung von `main.py`, `server.py`, `app.py`, `run.py`
+- Direkte Python-Ausführung
+- Beispiel: Stream-Analytics, Chat-Moderation, APIs
+
+## 🚀 Installation
+
+1. **Dependencies installieren:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Entwicklung starten:**
+
+   ```bash
+   npm run dev
+   ```
+
+3. **Für Windows kompilieren:**
+   ```bash
+   npm run dist:win
+   ```
+
+## 📁 Projekt-Struktur
+
+```
+xAkiitohsMultipleProgramExecutor/
+├── Programs/                    # Deine Stream-Programme
+│   ├── Example-TwitchBot/      # Beispiel Node.js Programm
+│   ├── Example-StreamStats/    # Beispiel Python Programm
+│   └── Example-InputTest/      # Beispiel interaktives Programm
+├── src/                        # Vue.js Frontend
+│   ├── components/            # Vue Komponenten
+│   ├── types/                 # TypeScript Definitionen
+│   └── style.css             # Globale Styles
+├── electron/                   # Electron Backend
+│   ├── main.ts               # Haupt-Prozess
+│   └── preload.ts            # Preload-Skript
+└── dist/                      # Kompilierte Anwendung
+```
+
+## 🎯 Verwendung
+
+### Programme hinzufügen
+
+1. **Node.js Programm:**
+
+   ```
+   Programs/MeinBot/
+   ├── package.json          # Mit start/dev Script
+   ├── index.js             # Hauptdatei
+   └── node_modules/        # Dependencies
+   ```
+
+2. **Python Programm:**
+   ```
+   Programs/MeinScript/
+   ├── main.py              # Hauptdatei
+   ├── requirements.txt     # Optional
+   └── config/              # Weitere Dateien
+   ```
+
+### Funktionen
+
+- **Programm starten:** Klicke auf "Starten" bei verfügbaren Programmen
+- **Terminal auswählen:** Klicke auf laufende Programme in der Seitenleiste
+- **Eingaben senden:** Nutze das Eingabefeld im Terminal-Bereich
+- **Programm stoppen:** Klicke auf den Stop-Button bei laufenden Programmen
+- **Ordner öffnen:** Nutze "Programme Ordner" um neue Programme hinzuzufügen
+
+## 🎨 Design-Features
+
+- **Gradient-Farbschema:** Lila/Blau Gradients für moderne Optik
+- **Glasmorphism-Effekte:** Transparente Bereiche mit Blur-Effekten
+- **Animationen:** Smooth Übergänge und Hover-Effekte
+- **Responsive Layout:** Optimiert für verschiedene Bildschirmgrößen
+- **Dunkles Theme:** Augenfreundlich für lange Streaming-Sessions
+
+## ⚡ Performance
+
+- **Schnelle Startup-Zeit:** Optimierte Electron-Konfiguration
+- **Memory-Effizient:** Intelligente Prozess-Verwaltung
+- **Real-time Updates:** WebSocket-ähnliche IPC-Kommunikation
+
+## 🔧 Entwicklung
+
+### Technologie-Stack
+
+- **Electron 27** - Desktop-Framework
+- **Vue 3** - Frontend-Framework
+- **TypeScript** - Typisierte Entwicklung
+- **Vite** - Build-Tool und Dev-Server
+
+### Scripts
+
+```bash
+npm run dev          # Entwicklung starten
+npm run build        # Für Produktion kompilieren
+npm run dist         # Installer erstellen
+npm run dist:win     # Windows-spezifischer Build
+```
+
+## 📝 Lizenz
+
+MIT License - Entwickelt für xAkiitoh's Stream
+
+## 🤝 Support
+
+Bei Fragen oder Problemen, kontaktiere den Entwickler oder erstelle ein Issue im Repository.
+
+---
+
+**Perfekt für Streamer, die ihre Tools professionell verwalten möchten! 🎮✨**
