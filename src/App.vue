@@ -53,7 +53,7 @@ interface RunningProgram {
 interface ProgramOutput {
   id: string;
   output: string;
-  type: "stdout" | "stderr";
+  type: "stdout" | "stderr" | "input";
 }
 
 const programs = ref<Program[]>([]);
@@ -145,7 +145,12 @@ const openProgramsFolder = async () => {
 // Event listeners
 const handleProgramOutput = (data: ProgramOutput) => {
   if (selectedProgram.value?.id === data.id) {
-    programOutput.value.push(`[${data.type.toUpperCase()}] ${data.output}`);
+    // For input type, the output is already formatted by the backend
+    if (data.type === 'input') {
+      programOutput.value.push(data.output);
+    } else {
+      programOutput.value.push(`[${data.type.toUpperCase()}] ${data.output}`);
+    }
   }
 };
 

@@ -157,8 +157,16 @@ class ProgramManager {
   sendInput(id, input) {
     const program = this.runningPrograms.get(id)
     if (program && program.process.stdin) {
+      // Add input to terminal log first
+      const inputLine = `[INPUT] ${program.name}> ${input}`
+      program.terminal.push(inputLine)
+      
+      // Send input to process
       program.process.stdin.write(input + '\n')
-      program.terminal.push(`[INPUT] ${input}`)
+      
+      // Notify renderer about the input
+      this.sendToRenderer('program-output', { id, output: inputLine, type: 'input' })
+      
       return true
     }
     return false
@@ -201,7 +209,7 @@ function createWindow() {
 
   // Load the app
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5175')
+    mainWindow.loadURL('http://localhost:5176')
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))

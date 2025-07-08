@@ -4,8 +4,8 @@
   "description": "Ein moderner Programm-Launcher für xAkiitoh's Stream Tools",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:vue\" \"wait-on http://localhost:5175 && npm run dev:electron\"",
-    "dev:vue": "vite --port 5175",
+    "dev": "concurrently \"npm run dev:vue\" \"wait-on http://localhost:5176 && npm run dev:electron\"",
+    "dev:vue": "vite --port 5176",
     "dev:electron": "cross-env NODE_ENV=development electron .",
     "build": "npm run build:vue && npm run build:electron",
     "build:vue": "vue-tsc && vite build",

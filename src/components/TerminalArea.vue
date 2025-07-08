@@ -162,7 +162,7 @@ const getLineContent = (line: string) => {
 
 const sendInput = () => {
   const input = currentInput.value.trim();
-  if (input) {
+  if (input && props.selectedProgram) {
     emit("send-input", input);
     inputHistory.value.unshift(input);
     if (inputHistory.value.length > 50) {
@@ -341,10 +341,16 @@ watch(
 
 .terminal-line.input .line-prefix {
   color: #10b981;
+  font-weight: bold;
 }
 
 .terminal-line.input .line-content {
   color: #6ee7b7;
+  font-weight: 500;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  margin-left: 0.25rem;
 }
 
 .terminal-line.output .line-content {
