@@ -97,7 +97,7 @@ class ProgramManager {
       }
     } else {
       command = 'python'
-      args = [program.main || 'main.py']
+      args = ['-u', program.main || 'main.py']  // -u flag for unbuffered output
     }
 
     // Set up environment variables for proper UTF-8 handling
@@ -105,6 +105,7 @@ class ProgramManager {
     if (program.type === 'python') {
       env.PYTHONIOENCODING = 'utf-8'
       env.PYTHONLEGACYWINDOWSIOENCODING = '0'
+      env.PYTHONUNBUFFERED = '1'  // Force unbuffered output
     }
 
     const childProcess = spawn(command, args, {
@@ -215,7 +216,7 @@ function createWindow() {
 
   // Load the app
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5176')
+    mainWindow.loadURL('http://localhost:5177')  // Updated port to match Vite
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))

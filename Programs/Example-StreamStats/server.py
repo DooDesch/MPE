@@ -33,6 +33,7 @@ class StreamStatsAnalyzer:
         print(f"📊 Version: {__version__}")
         print(f"🕐 Gestartet um: {self.start_time.strftime('%H:%M:%S')}")
         print("-" * 50)
+        sys.stdout.flush()  # Force initial output
         
         try:
             while True:
@@ -55,6 +56,7 @@ class StreamStatsAnalyzer:
         
         print(f"[{current_time}] 📺 Viewer: {self.viewer_count} | 💬 Chat: {self.chat_messages} | 👥 Follower: {self.followers}")
         print(f"⏱️ Uptime: {str(uptime).split('.')[0]}")
+        sys.stdout.flush()  # Force output to be displayed immediately
     
     def show_summary(self):
         total_time = datetime.now() - self.start_time
