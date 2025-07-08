@@ -3,6 +3,11 @@ const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 
+// Suppress security warnings in development
+if (process.env.NODE_ENV === 'development') {
+  process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
+}
+
 let mainWindow
 let programManager
 
@@ -201,6 +206,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: process.env.NODE_ENV !== 'development',
+      allowRunningInsecureContent: process.env.NODE_ENV === 'development',
       preload: path.join(__dirname, 'preload.js')
     },
     titleBarStyle: 'default',
