@@ -1,6 +1,6 @@
 {
   "name": "xakiitoh-program-executor",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Ein moderner Programm-Launcher für xAkiitoh's Stream Tools",
   "main": "electron/main.js",
   "scripts": {
