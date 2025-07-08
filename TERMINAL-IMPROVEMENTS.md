@@ -3,33 +3,37 @@
 ## ✅ Problem gelöst: Input-Positionierung korrigiert
 
 ### 🐛 **Ursprüngliches Problem:**
+
 User-Input wurde immer ganz unten im Terminal angezeigt, statt chronologisch an der richtigen Stelle.
 
 ### � **Lösung implementiert:**
 
 #### **Backend-Integration (main.js):**
+
 ```javascript
 sendInput(id, input) {
   // 1. Input sofort in Terminal-Log einfügen
   const inputLine = `[INPUT] ${program.name}> ${input}`
   program.terminal.push(inputLine)
-  
+
   // 2. Input an Programm senden
   program.process.stdin.write(input + '\n')
-  
+
   // 3. Frontend über Input benachrichtigen
   this.sendToRenderer('program-output', { id, output: inputLine, type: 'input' })
 }
 ```
 
 #### **Frontend vereinfacht (TerminalArea.vue):**
-- ❌ Entfernt: Lokale Input-Speicherung 
+
+- ❌ Entfernt: Lokale Input-Speicherung
 - ✅ Vereinfacht: Vertraue vollständig auf Backend-Integration
 - ✅ Ergebnis: Chronologisch korrekte Darstellung
 
 ### 🎯 **Jetzt funktioniert:**
 
 **Korrekte Reihenfolge:**
+
 ```
 [OUT] Wie ist dein Name?
 [INPUT] Example-InputTest> Max    ← Erscheint sofort an richtiger Stelle!
@@ -39,6 +43,7 @@ sendInput(id, input) {
 ```
 
 **Statt vorher:**
+
 ```
 [OUT] Wie ist dein Name?
 [OUT] Hallo Max, willkommen!
@@ -65,7 +70,7 @@ sendInput(id, input) {
 ### 🎮 **Für Streamer perfekt:**
 
 - **📺 Viewer sehen Input im richtigen Kontext**
-- **🎯 Klare Dialog-Struktur zwischen User und Programm**  
+- **🎯 Klare Dialog-Struktur zwischen User und Programm**
 - **💫 Professionelle Terminal-Erfahrung**
 - **🔄 Natürlicher Konversations-Fluss**
 

@@ -146,7 +146,7 @@ const openProgramsFolder = async () => {
 const handleProgramOutput = (data: ProgramOutput) => {
   if (selectedProgram.value?.id === data.id) {
     // For input type, the output is already formatted by the backend
-    if (data.type === 'input') {
+    if (data.type === "input") {
       programOutput.value.push(data.output);
     } else {
       programOutput.value.push(`[${data.type.toUpperCase()}] ${data.output}`);
