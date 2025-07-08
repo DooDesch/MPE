@@ -103,8 +103,28 @@ const startProgram = async (program: Program) => {
 };
 
 const stopProgram = async (id: string) => {
+  const programToStop = runningPrograms.value.find(
+    (p: RunningProgram) => p.id === id
+  );
+  const programName = programToStop?.name || "Unbekanntes Programm";
+
   try {
-    await window.electronAPI.stopProgram(id);
+    console.log(`Stopping program: ${programName} (ID: ${id})`);
+    const result = await window.electronAPI.stopProgram(id);
+
+    if (result) {
+      console.log(`Program ${programName} stopped successfully`);
+
+      // Add stop message to output if this program is selected
+      if (selectedProgram.value?.id === id) {
+        programOutput.value.push(
+          `[INFO] Programm "${programName}" wurde beendet`
+        );
+      }
+    } else {
+      console.warn(`Failed to stop program: ${programName}`);
+    }
+
     await refreshPrograms();
 
     // Clear selection if the stopped program was selected
@@ -114,6 +134,7 @@ const stopProgram = async (id: string) => {
     }
   } catch (error) {
     console.error("Fehler beim Stoppen des Programms:", error);
+    alert(`Fehler beim Stoppen von "${programName}": ${error}`);
   }
 };
 

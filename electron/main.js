@@ -3,6 +3,38 @@ const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 
+// Kill process tree utility for better process cleanup
+function killProcessTree(pid, signal = 'SIGTERM') {
+  if (process.platform === 'win32') {
+    // On Windows, use taskkill to kill the entire process tree
+    try {
+      spawn('taskkill', ['/pid', pid.toString(), '/T', '/F'], {
+        stdio: 'ignore',
+        detached: true
+      })
+      return true
+    } catch (error) {
+      console.error('Taskkill failed:', error.message)
+      return false
+    }
+  } else {
+    // On Unix-like systems, kill the process group
+    try {
+      process.kill(-pid, signal) // Negative PID kills the process group
+      return true
+    } catch (error) {
+      console.error('Kill process group failed:', error.message)
+      try {
+        process.kill(pid, signal) // Fallback to single process
+        return true
+      } catch (fallbackError) {
+        console.error('Kill single process failed:', fallbackError.message)
+        return false
+      }
+    }
+  }
+}
+
 // Suppress security warnings in development
 if (process.env.NODE_ENV === 'development') {
   process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
@@ -235,7 +267,9 @@ class ProgramManager {
       cwd,
       stdio: 'pipe',
       shell: true,
-      env
+      env,
+      // Create a new process group for better process management
+      detached: process.platform !== 'win32' // On Unix, detached creates new process group
     })
 
     const runningProgram = {
@@ -276,8 +310,31 @@ class ProgramManager {
   stopProgram(id) {
     const program = this.runningPrograms.get(id)
     if (program) {
-      program.process.kill()
+      console.log(`Stopping program: ${program.name} (ID: ${id}, PID: ${program.process.pid})`)
+      
+      try {
+        // Use our improved kill function
+        const success = killProcessTree(program.process.pid, 'SIGTERM')
+        
+        if (!success) {
+          // Fallback to force kill
+          console.log(`Graceful stop failed, force killing: ${program.name}`)
+          setTimeout(() => {
+            killProcessTree(program.process.pid, 'SIGKILL')
+          }, 2000)
+        }
+        
+        console.log(`Program ${program.name} stop signal sent`)
+      } catch (error) {
+        console.error(`Error stopping program ${program.name}:`, error.message)
+      }
+      
+      // Clean up from our tracking immediately
       this.runningPrograms.delete(id)
+      
+      // Notify renderer
+      this.sendToRenderer('program-closed', { id, code: -1 })
+      
       return true
     }
     return false
@@ -318,6 +375,17 @@ class ProgramManager {
       window.webContents.send(channel, data)
     })
   }
+
+  cleanup() {
+    console.log('Cleaning up running programs...')
+    const runningIds = Array.from(this.runningPrograms.keys())
+    
+    for (const id of runningIds) {
+      this.stopProgram(id)
+    }
+    
+    console.log(`Stopped ${runningIds.length} running programs`)
+  }
 }
 
 function createWindow() {
@@ -356,6 +424,10 @@ function createWindow() {
   })
 
   mainWindow.on('closed', () => {
+    // Clean up all running programs before quitting
+    if (programManager) {
+      programManager.cleanup()
+    }
     app.quit()
   })
 }
@@ -397,8 +469,20 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  // Clean up all running programs before quitting
+  if (programManager) {
+    programManager.cleanup()
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit()
+  }
+})
+
+app.on('before-quit', () => {
+  // Ensure cleanup happens before app quits
+  if (programManager) {
+    programManager.cleanup()
   }
 })
 
