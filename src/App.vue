@@ -20,6 +20,7 @@
         :selected-program="selectedProgram"
         :output="programOutput"
         @send-input="sendInput"
+        @clear-terminal="clearTerminal"
       />
     </div>
 
@@ -132,6 +133,10 @@ const sendInput = async (input: string) => {
       console.error("Fehler beim Senden der Eingabe:", error);
     }
   }
+};
+
+const clearTerminal = () => {
+  programOutput.value = [];
 };
 
 const openProgramsFolder = async () => {

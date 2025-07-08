@@ -126,6 +126,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "send-input": [input: string];
+  "clear-terminal": [];
 }>();
 
 const currentInput = ref("");
@@ -186,8 +187,7 @@ const navigateHistory = (direction: number) => {
 };
 
 const clearTerminal = () => {
-  // This would need to be handled by the parent component
-  // For now, we just clear the local display
+  emit("clear-terminal");
 };
 
 // Auto-scroll to bottom when new output arrives
