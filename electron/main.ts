@@ -9,6 +9,32 @@ import { UpdateService } from "./updateService";
 // Import about dialog from TypeScript file
 import { showAboutDialog } from "./about";
 
+// Kill process tree utility for better process cleanup
+function killProcessTree(pid: number, signal: string = "SIGTERM"): void {
+  if (process.platform === "win32") {
+    // On Windows, use taskkill to kill the entire process tree
+    try {
+      spawn("taskkill", ["/pid", pid.toString(), "/T", "/F"], {
+        stdio: "ignore",
+      });
+    } catch (error) {
+      console.warn(`Failed to kill process tree for PID ${pid}:`, error);
+    }
+  } else {
+    // On Unix-like systems, use kill
+    try {
+      process.kill(-pid, signal);
+    } catch (error) {
+      console.warn(`Failed to kill process group for PID ${pid}:`, error);
+      try {
+        process.kill(pid, signal);
+      } catch (fallbackError) {
+        console.warn(`Failed to kill process PID ${pid}:`, fallbackError);
+      }
+    }
+  }
+}
+
 // Simple MIME type lookup
 function getMimeType(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
@@ -85,8 +111,14 @@ function getConfiguredPort(projectPath: string, projectName: string): number {
 function createStaticServer(
   rootPath: string,
   port: number = 0
-): Promise<{ server: http.Server; port: number; url: string }> {
+): Promise<{
+  server: http.Server;
+  port: number;
+  url: string;
+  connections: Set<any>;
+}> {
   return new Promise((resolve, reject) => {
+    const connections = new Set<any>();
     const server = http.createServer((req, res) => {
       let pathname = url.parse(req.url || "").pathname || "/";
 
@@ -119,6 +151,14 @@ function createStaticServer(
       });
     });
 
+    // Track connections for proper cleanup
+    server.on("connection", (socket: any) => {
+      connections.add(socket);
+      socket.on("close", () => {
+        connections.delete(socket);
+      });
+    });
+
     server.listen(port, "localhost", (err?: any) => {
       if (err) {
         reject(err);
@@ -128,6 +168,7 @@ function createStaticServer(
           server,
           port: actualPort,
           url: `http://localhost:${actualPort}`,
+          connections,
         });
       }
     });
@@ -151,6 +192,7 @@ interface RunningProgram {
   type?: "nodejs" | "python" | "html";
   server?: any;
   url?: string;
+  connections?: Set<any>;
 }
 
 class ProgramManager {
@@ -332,6 +374,7 @@ class ProgramManager {
           name: program.name,
           server: serverInfo.server,
           url: serverInfo.url,
+          connections: serverInfo.connections,
           terminal: [
             `[INFO] Static server started at ${serverInfo.url} (configured port: ${port})`,
           ],
@@ -426,18 +469,112 @@ class ProgramManager {
   stopProgram(id: string): boolean {
     const program = this.runningPrograms.get(id);
     if (program) {
+      console.log(`Stopping program: ${program.name} (ID: ${id})`);
+
       // Handle HTML server differently
       if (program.type === "html" && program.server) {
-        program.server.close();
-        this.sendToRenderer("program-output", {
-          id,
-          output: `[INFO] Static server stopped\n`,
-          type: "stdout",
-        });
-      } else if (program.process) {
-        program.process.kill();
+        try {
+          console.log(
+            `Closing HTTP server for ${program.name}, listening: ${program.server.listening}`
+          );
+
+          // Aggressive server shutdown approach
+          if (program.server.listening) {
+            // Step 1: Close all existing connections if tracked
+            if (program.connections) {
+              console.log(
+                `Force closing ${program.connections.size} tracked connections`
+              );
+              program.connections.forEach((socket: any) => {
+                try {
+                  socket.destroy();
+                } catch (err) {
+                  console.warn(`Error destroying tracked socket:`, err);
+                }
+              });
+              program.connections.clear();
+            }
+
+            // Step 2: Use closeAllConnections if available (Node.js 18.2+)
+            if (typeof program.server.closeAllConnections === "function") {
+              console.log(`Using server.closeAllConnections()`);
+              program.server.closeAllConnections();
+            }
+
+            // Step 3: Close the server gracefully
+            program.server.close((err: Error | undefined) => {
+              if (err) {
+                console.error(`Error closing server for ${program.name}:`, err);
+              } else {
+                console.log(`Server for ${program.name} closed successfully`);
+              }
+            });
+
+            // Step 4: Force close after short timeout if still listening
+            setTimeout(() => {
+              if (program.server && program.server.listening) {
+                console.log(`Force closing server handle for ${program.name}`);
+                try {
+                  // Access the internal handle and close it
+                  const handle = (program.server as any)._handle;
+                  if (handle && typeof handle.close === "function") {
+                    handle.close();
+                  }
+
+                  // Set listening to false manually
+                  (program.server as any).listening = false;
+                } catch (forceErr) {
+                  console.warn(`Error force closing server handle:`, forceErr);
+                }
+              }
+            }, 500);
+          } else {
+            console.log(`Server for ${program.name} was not listening`);
+          }
+
+          this.sendToRenderer("program-output", {
+            id,
+            output: `[INFO] Static server stopped\n`,
+            type: "stdout",
+          });
+        } catch (error) {
+          console.error(
+            `Error stopping HTML server for ${program.name}:`,
+            error
+          );
+        }
+      } else if (program.process && program.process.pid) {
+        // Use the improved process killing for Node.js and Python processes
+        try {
+          console.log(`Killing process tree for PID: ${program.process.pid}`);
+          killProcessTree(program.process.pid, "SIGTERM");
+
+          // Give it a moment, then force kill if necessary
+          setTimeout(() => {
+            if (
+              program.process &&
+              !program.process.killed &&
+              program.process.pid
+            ) {
+              console.log(
+                `Force killing process tree for PID: ${program.process.pid}`
+              );
+              killProcessTree(program.process.pid, "SIGKILL");
+            }
+          }, 2000);
+
+          this.sendToRenderer("program-output", {
+            id,
+            output: `[INFO] Process terminated\n`,
+            type: "stdout",
+          });
+        } catch (error) {
+          console.error(`Error killing process for ${program.name}:`, error);
+        }
       }
+
       this.runningPrograms.delete(id);
+      this.sendToRenderer("program-closed", { id, code: 0 });
       return true;
     }
     return false;
