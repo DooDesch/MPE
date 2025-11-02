@@ -9,6 +9,7 @@ const {
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const { showAboutDialog } = require("./about");
 
 // Kill process tree utility for better process cleanup
 function killProcessTree(pid, signal = "SIGTERM") {
@@ -477,7 +478,7 @@ function createApplicationMenu() {
         {
           label: "About xAkiitoh Program Executor",
           click: () => {
-            showAboutDialog();
+            showAboutDialog(mainWindow);
           },
         },
         {
@@ -530,21 +531,6 @@ function createApplicationMenu() {
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
-}
-
-function showAboutDialog() {
-  const packageJson = require("../package.json");
-  const currentYear = new Date().getFullYear();
-
-  dialog.showMessageBox(mainWindow, {
-    type: "info",
-    title: "About xAkiitoh Program Executor",
-    message: "xAkiitoh Program Executor",
-    detail: `Version: ${packageJson.version}\n\nA multi-program execution environment for Node.js and Python applications.\n\nDeveloped with Electron, Vue.js and TypeScript.\n\n© ${currentYear} xAkiitoh`,
-    buttons: ["OK"],
-    defaultId: 0,
-    icon: null,
-  });
 }
 
 function createWindow() {
