@@ -154,7 +154,76 @@ class ProgramManager {
   private programsPath: string;
 
   constructor() {
-    this.programsPath = path.join(__dirname, "../../Programs");
+    // In production, use userData directory; in development, use local Programs folder
+    if (app.isPackaged) {
+      this.programsPath = path.join(app.getPath("userData"), "Programs");
+    } else {
+      this.programsPath = path.join(__dirname, "../../Programs");
+    }
+
+    // Ensure Programs directory exists
+    this.ensureProgramsDirectory();
+  }
+
+  private ensureProgramsDirectory() {
+    try {
+      if (!fs.existsSync(this.programsPath)) {
+        fs.mkdirSync(this.programsPath, { recursive: true });
+        console.log(`Created Programs directory at: ${this.programsPath}`);
+
+        // Copy example programs from app resources if they exist
+        this.copyExamplePrograms();
+      }
+    } catch (error) {
+      console.error("Error creating Programs directory:", error);
+    }
+  }
+
+  private copyExamplePrograms() {
+    try {
+      // In packaged app, example programs are in resources/Programs-Examples
+      const examplesPath = app.isPackaged
+        ? path.join(process.resourcesPath, "Programs-Examples")
+        : path.join(__dirname, "../../Programs");
+
+      if (fs.existsSync(examplesPath)) {
+        const items = fs.readdirSync(examplesPath, { withFileTypes: true });
+
+        for (const item of items) {
+          if (item.isDirectory() && !item.name.startsWith(".")) {
+            const sourcePath = path.join(examplesPath, item.name);
+            const targetPath = path.join(this.programsPath, item.name);
+
+            if (!fs.existsSync(targetPath)) {
+              this.copyDirectory(sourcePath, targetPath);
+              console.log(`Copied example program: ${item.name}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error copying example programs:", error);
+    }
+  }
+
+  private copyDirectory(src: string, dest: string) {
+    try {
+      fs.mkdirSync(dest, { recursive: true });
+      const items = fs.readdirSync(src, { withFileTypes: true });
+
+      for (const item of items) {
+        const srcPath = path.join(src, item.name);
+        const destPath = path.join(dest, item.name);
+
+        if (item.isDirectory()) {
+          this.copyDirectory(srcPath, destPath);
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      }
+    } catch (error) {
+      console.error(`Error copying directory ${src} to ${dest}:`, error);
+    }
   }
 
   async scanPrograms(): Promise<Program[]> {
@@ -401,6 +470,10 @@ class ProgramManager {
     return program ? program.terminal : [];
   }
 
+  getProgramsPath(): string {
+    return this.programsPath;
+  }
+
   private sendToRenderer(channel: string, data: any) {
     BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send(channel, data);
@@ -472,7 +545,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("open-programs-folder", () => {
-    shell.openPath(path.join(__dirname, "../../Programs"));
+    shell.openPath(programManager.getProgramsPath());
   });
 });
 
