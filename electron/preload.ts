@@ -37,6 +37,8 @@ const electronAPI = {
   // System
   openProgramsFolder: (): Promise<void> =>
     ipcRenderer.invoke("open-programs-folder"),
+  restoreExamples: (): Promise<void> =>
+    ipcRenderer.invoke("restore-examples"),
 
   // Updates
   checkForUpdates: (): Promise<{

@@ -7,7 +7,7 @@ import * as url from "url";
 import { UpdateService } from "./updateService";
 
 // Import about dialog from JavaScript file
-const { showAboutDialog } = require("./about");
+const { showAboutDialog } = require(path.join(__dirname, "about.js"));
 
 // Simple MIME type lookup
 function getMimeType(filePath: string): string {
@@ -162,7 +162,9 @@ class ProgramManager {
     if (app.isPackaged) {
       this.programsPath = path.join(app.getPath("userData"), "Programs");
     } else {
-      this.programsPath = path.join(__dirname, "../../Programs");
+      // In development, use absolute path to ensure we get the right location
+      const projectRoot = path.resolve(__dirname, "../..");
+      this.programsPath = path.join(projectRoot, "Programs");
     }
 
     // Ensure Programs directory exists
@@ -183,7 +185,7 @@ class ProgramManager {
     }
   }
 
-  private copyExamplePrograms() {
+  public copyExamplePrograms() {
     try {
       // In packaged app, example programs are in resources/Programs-Examples
       const examplesPath = app.isPackaged
@@ -553,6 +555,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle("open-programs-folder", () => {
     shell.openPath(programManager.getProgramsPath());
+  });
+
+  ipcMain.handle("restore-examples", () => {
+    programManager.copyExamplePrograms();
   });
 
   // Update Handlers
