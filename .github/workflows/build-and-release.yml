@@ -7,19 +7,20 @@ on:
 jobs:
   release:
     runs-on: windows-latest
+    permissions:
+      contents: write
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
     
-    - run: npm ci
-    - run: npm run build
-    
-    - name: Bump version
+    - name: Bump version and create tag
       id: version
       run: |
         $pkg = Get-Content package.json | ConvertFrom-Json
@@ -30,15 +31,19 @@ jobs:
         $pkg.version = $new
         $pkg | ConvertTo-Json -Depth 100 | Set-Content package.json
         
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
         git add package.json
-        git commit -m "bump version to $new"
-        git push
+        git commit -m "chore: bump version to $new"
         git tag "v$new"
-        git push --tags
+        git push origin main
+        git push origin "v$new"
         
         echo "new_version=$new" >> $env:GITHUB_OUTPUT
+        echo "Release version: $new"
+    
+    - run: npm ci
+    - run: npm run build
     
     - name: Build Windows installer
       run: npm run dist:win
@@ -47,4 +52,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.version.outputs.new_version }}
+        name: Release v${{ steps.version.outputs.new_version }}
         files: release/${{ steps.version.outputs.new_version }}/*.exe
+        generate_release_notes: true
