@@ -141,9 +141,11 @@ onMounted(async () => {
   await checkForUpdates();
 
   // Listen for download progress updates
-  window.electronAPI.onDownloadProgress((progress) => {
-    downloadProgress.value = progress;
-  });
+  window.electronAPI.onDownloadProgress(
+    (progress: typeof downloadProgress.value) => {
+      downloadProgress.value = progress;
+    }
+  );
 });
 
 async function checkForUpdates() {

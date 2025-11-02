@@ -1,10 +1,13 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell, Menu } from "electron";
 import { spawn, ChildProcess } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
 import { UpdateService } from "./updateService";
+
+// Import about dialog from JavaScript file
+const { showAboutDialog } = require("./about");
 
 // Simple MIME type lookup
 function getMimeType(filePath: string): string {
@@ -560,7 +563,118 @@ app.whenReady().then(() => {
   ipcMain.handle("download-update", async (_, downloadUrl: string) => {
     return await updateService.downloadAndInstall(downloadUrl);
   });
+
+  // Create application menu
+  createApplicationMenu();
 });
+
+function createApplicationMenu() {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "Refresh Programs",
+          accelerator: "F5",
+          click: () => {
+            mainWindow.webContents.send("refresh-programs");
+          },
+        },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "close" }],
+    },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "About xAkiitoh Program Executor",
+          click: () => {
+            showAboutDialog(mainWindow);
+          },
+        },
+        {
+          label: "Open Programs Folder",
+          click: () => {
+            if (programManager) {
+              shell.openPath(programManager.getProgramsPath());
+            }
+          },
+        },
+      ],
+    },
+  ];
+
+  // macOS specific menu adjustments
+  if (process.platform === "darwin") {
+    template.unshift({
+      label: app.getName(),
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    });
+
+    // Edit menu
+    template[2].submenu = [
+      ...(template[2].submenu as any[]),
+      { type: "separator" },
+      {
+        label: "Speech",
+        submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }],
+      },
+    ];
+
+    // Window menu
+    template[4].submenu = [
+      { role: "close" },
+      { role: "minimize" },
+      { role: "zoom" },
+      { type: "separator" },
+      { role: "front" },
+    ];
+  }
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
