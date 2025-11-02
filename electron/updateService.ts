@@ -1,5 +1,8 @@
-import { shell } from "electron";
-import { app } from "electron";
+import { shell, app, BrowserWindow } from "electron";
+import * as path from "path";
+import * as fs from "fs";
+import * as os from "os";
+import * as https from "https";
 
 interface GitHubRelease {
   tag_name: string;
@@ -27,9 +30,14 @@ export class UpdateService {
     releaseNotes?: string;
   }> {
     try {
-      const currentVersion = app.getVersion();
+      // Für Testing: Simuliere immer alte Version, damit Updates verfügbar sind
+      const currentVersion = this.DEBUG_MODE ? "1.0.0" : app.getVersion();
       console.log(`[UpdateService] 🔍 Checking for updates...`);
-      console.log(`[UpdateService] 📦 Current app version: ${currentVersion}`);
+      console.log(
+        `[UpdateService] 📦 Current app version: ${currentVersion}${
+          this.DEBUG_MODE ? " (DEBUG: Simulated old version)" : ""
+        }`
+      );
       console.log(`[UpdateService] 🌐 GitHub API URL: ${this.GITHUB_API_URL}`);
 
       // Prepare headers for public repository
@@ -131,64 +139,177 @@ export class UpdateService {
       }
 
       console.log(`[UpdateService] 📤 No update needed, returning false`);
-
-      // Debug-Fallback: Mock ein Update wenn kein echtes gefunden wurde
-      if (this.DEBUG_MODE) {
-        console.log(
-          `[UpdateService] 🧪 DEBUG FALLBACK: No real update found, simulating one for testing`
-        );
-        return {
-          hasUpdate: true,
-          currentVersion,
-          latestVersion: "1.2.0",
-          downloadUrl: "https://github.com/DooDesch/MPE/releases/latest",
-          releaseNotes:
-            "🧪 Debug Fallback Update - Test für Update-Notification",
-        };
-      }
-
       return { hasUpdate: false, currentVersion };
     } catch (error) {
       console.error(`[UpdateService] 💥 Error checking for updates:`, error);
-
-      // Debug-Fallback auch bei Fehlern
-      if (this.DEBUG_MODE) {
-        console.log(
-          `[UpdateService] 🧪 DEBUG FALLBACK: Error occurred, simulating update for testing`
-        );
-        return {
-          hasUpdate: true,
-          currentVersion: app.getVersion(),
-          latestVersion: "1.2.0",
-          downloadUrl: "https://github.com/DooDesch/MPE/releases/latest",
-          releaseNotes: "🧪 Debug Fallback Update - Test nach API-Fehler",
-        };
-      }
-
-      return { hasUpdate: false, currentVersion: app.getVersion() };
+      const currentVersion = this.DEBUG_MODE ? "1.0.0" : app.getVersion();
+      return { hasUpdate: false, currentVersion };
     }
   }
 
   async downloadAndInstall(downloadUrl: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        console.log(
+          `[UpdateService] 📥 Starting direct download from: ${downloadUrl}`
+        );
+
+        // Create temp directory for download
+        const tempDir = path.join(os.tmpdir(), "xakiitoh-updates");
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+
+        // Generate proper filename
+        const fileName = this.generateFileName(downloadUrl);
+        const filePath = path.join(tempDir, fileName);
+
+        console.log(`[UpdateService] 💾 Downloading to: ${filePath}`);
+
+        // Start download
+        const file = fs.createWriteStream(filePath);
+        let downloadedBytes = 0;
+        let totalBytes = 0;
+
+        const request = https.get(downloadUrl, (response) => {
+          // Handle redirects
+          if (response.statusCode === 301 || response.statusCode === 302) {
+            console.log(
+              `[UpdateService] 🔄 Following redirect to: ${response.headers.location}`
+            );
+            return this.downloadAndInstall(response.headers.location as string)
+              .then(resolve)
+              .catch(reject);
+          }
+
+          if (response.statusCode !== 200) {
+            reject(
+              new Error(
+                `Download failed: ${response.statusCode} ${response.statusMessage}`
+              )
+            );
+            return;
+          }
+
+          totalBytes = parseInt(response.headers["content-length"] || "0", 10);
+          console.log(
+            `[UpdateService] 📊 Total file size: ${this.formatBytes(
+              totalBytes
+            )}`
+          );
+
+          response.on("data", (chunk) => {
+            downloadedBytes += chunk.length;
+            const progress =
+              totalBytes > 0 ? (downloadedBytes / totalBytes) * 100 : 0;
+
+            // Send progress update to renderer
+            this.sendProgressUpdate(progress, downloadedBytes, totalBytes);
+          });
+
+          response.on("end", async () => {
+            console.log(`[UpdateService] ✅ Download completed: ${filePath}`);
+
+            try {
+              // Launch installer
+              console.log(`[UpdateService] 🚀 Launching installer...`);
+              await shell.openPath(filePath);
+
+              // Close app after short delay to allow installer to start
+              setTimeout(() => {
+                console.log(
+                  `[UpdateService] 👋 Closing app for update installation...`
+                );
+                app.quit();
+              }, 1000);
+
+              resolve();
+            } catch (error) {
+              console.error(
+                `[UpdateService] 💥 Error launching installer:`,
+                error
+              );
+              reject(error);
+            }
+          });
+
+          response.pipe(file);
+        });
+
+        request.on("error", (error) => {
+          console.error(`[UpdateService] 💥 Download error:`, error);
+          fs.unlink(filePath, () => {}); // Clean up partial file
+          reject(error);
+        });
+
+        file.on("error", (error) => {
+          console.error(`[UpdateService] 💥 File write error:`, error);
+          fs.unlink(filePath, () => {}); // Clean up partial file
+          reject(error);
+        });
+      } catch (error) {
+        console.error(`[UpdateService] 💥 Error in downloadAndInstall:`, error);
+        reject(error);
+      }
+    });
+  }
+
+  private generateFileName(url: string): string {
     try {
-      console.log(`[UpdateService] 📥 Starting download from: ${downloadUrl}`);
+      // Try to extract filename from URL first
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const urlFileName = pathname.split("/").pop();
 
-      // Open the download URL in the default browser
-      await shell.openExternal(downloadUrl);
+      // If we get a proper .exe filename from URL, use it
+      if (
+        urlFileName &&
+        urlFileName.endsWith(".exe") &&
+        urlFileName.length > 4
+      ) {
+        console.log(`[UpdateService] 📝 Using URL filename: ${urlFileName}`);
+        return urlFileName;
+      }
 
-      console.log(`[UpdateService] ✅ Update download started in browser`);
-      console.log(`[UpdateService] 🌐 Browser should open: ${downloadUrl}`);
+      // Otherwise generate a proper filename with version and timestamp
+      const currentVersion = app.getVersion();
+      const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const fileName = `xAkiitoh-Program-Executor-Update-${currentVersion}-${timestamp}.exe`;
 
-      // Optional: Show a dialog asking if user wants to close the app
-      // after download to install the update
+      console.log(`[UpdateService] 📝 Generated filename: ${fileName}`);
+      return fileName;
+    } catch {
+      // Fallback filename
+      const fallbackName = `xAkiitoh-Program-Executor-Update-${Date.now()}.exe`;
+      console.log(
+        `[UpdateService] 📝 Using fallback filename: ${fallbackName}`
+      );
+      return fallbackName;
+    }
+  }
 
-      // For automatic installation, you could implement:
-      // 1. Download to temp folder using fetch/https
-      // 2. Launch the installer with shell.openPath()
-      // 3. Close the current app with app.quit()
-    } catch (error) {
-      console.error(`[UpdateService] 💥 Error downloading update:`, error);
-      throw error;
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }
+
+  private sendProgressUpdate(
+    progress: number,
+    downloadedBytes: number,
+    totalBytes: number
+  ): void {
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) {
+      mainWindow.webContents.send("download-progress", {
+        progress: Math.round(progress),
+        downloadedBytes,
+        totalBytes,
+        downloadedFormatted: this.formatBytes(downloadedBytes),
+        totalFormatted: this.formatBytes(totalBytes),
+      });
     }
   }
 

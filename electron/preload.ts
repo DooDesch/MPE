@@ -59,6 +59,17 @@ const electronAPI = {
   onProgramError: (callback: (data: { id: string; error: string }) => void) => {
     ipcRenderer.on("program-error", (_, data) => callback(data));
   },
+  onDownloadProgress: (
+    callback: (data: {
+      progress: number;
+      downloadedBytes: number;
+      totalBytes: number;
+      downloadedFormatted: string;
+      totalFormatted: string;
+    }) => void
+  ) => {
+    ipcRenderer.on("download-progress", (_, data) => callback(data));
+  },
 
   // Remove listeners
   removeAllListeners: (channel: string) => {
