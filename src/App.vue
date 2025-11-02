@@ -1,5 +1,8 @@
 <template>
   <div class="app">
+    <!-- Update Notification -->
+    <UpdateNotification />
+
     <Header
       @refresh="refreshPrograms"
       @open-folder="openProgramsFolder"
@@ -38,6 +41,7 @@ import Header from "./components/Header.vue";
 import Sidebar from "./components/Sidebar.vue";
 import TerminalArea from "./components/TerminalArea.vue";
 import StatusBar from "./components/StatusBar.vue";
+import UpdateNotification from "./components/UpdateNotification.vue";
 
 interface Program {
   name: string;

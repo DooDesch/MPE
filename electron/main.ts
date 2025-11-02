@@ -4,6 +4,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
+import { UpdateService } from "./updateService";
 
 // Simple MIME type lookup
 function getMimeType(filePath: string): string {
@@ -521,6 +522,9 @@ app.whenReady().then(() => {
   programManager = new ProgramManager();
   createWindow();
 
+  // Initialize update service
+  const updateService = new UpdateService();
+
   // IPC Handlers
   ipcMain.handle("scan-programs", () => programManager.scanPrograms());
 
@@ -546,6 +550,15 @@ app.whenReady().then(() => {
 
   ipcMain.handle("open-programs-folder", () => {
     shell.openPath(programManager.getProgramsPath());
+  });
+
+  // Update Handlers
+  ipcMain.handle("check-for-updates", async () => {
+    return await updateService.checkForUpdates();
+  });
+
+  ipcMain.handle("download-update", async (_, downloadUrl: string) => {
+    return await updateService.downloadAndInstall(downloadUrl);
   });
 });
 

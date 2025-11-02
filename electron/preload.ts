@@ -38,6 +38,17 @@ const electronAPI = {
   openProgramsFolder: (): Promise<void> =>
     ipcRenderer.invoke("open-programs-folder"),
 
+  // Updates
+  checkForUpdates: (): Promise<{
+    hasUpdate: boolean;
+    currentVersion: string;
+    latestVersion?: string;
+    downloadUrl?: string;
+    releaseNotes?: string;
+  }> => ipcRenderer.invoke("check-for-updates"),
+  downloadUpdate: (downloadUrl: string): Promise<void> =>
+    ipcRenderer.invoke("download-update", downloadUrl),
+
   // Event listeners
   onProgramOutput: (callback: (data: ProgramOutput) => void) => {
     ipcRenderer.on("program-output", (_, data) => callback(data));
