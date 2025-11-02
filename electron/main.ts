@@ -2,11 +2,89 @@ import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { spawn, ChildProcess } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
+import * as http from "http";
+import * as url from "url";
+
+// Simple MIME type lookup
+function getMimeType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  const mimeTypes: { [key: string]: string } = {
+    ".html": "text/html",
+    ".htm": "text/html",
+    ".js": "application/javascript",
+    ".css": "text/css",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".ttf": "font/ttf",
+    ".eot": "application/vnd.ms-fontobject",
+  };
+  return mimeTypes[ext] || "text/plain";
+}
+
+// Simple HTTP server for static HTML files
+function createStaticServer(
+  rootPath: string,
+  port: number = 0
+): Promise<{ server: http.Server; port: number; url: string }> {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      let pathname = url.parse(req.url || "").pathname || "/";
+
+      // Default to index.html for root requests
+      if (pathname === "/") {
+        pathname = "/index.html";
+      }
+
+      const filePath = path.join(rootPath, pathname);
+
+      // Security check - prevent directory traversal
+      const normalizedPath = path.normalize(filePath);
+      if (!normalizedPath.startsWith(path.normalize(rootPath))) {
+        res.writeHead(403);
+        res.end("Forbidden");
+        return;
+      }
+
+      // Check if file exists
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(404);
+          res.end("Not Found");
+          return;
+        }
+
+        const mimeType = getMimeType(filePath);
+        res.writeHead(200, { "Content-Type": mimeType });
+        res.end(data);
+      });
+    });
+
+    server.listen(port, "localhost", (err?: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        const actualPort = (server.address() as any)?.port || port;
+        resolve({
+          server,
+          port: actualPort,
+          url: `http://localhost:${actualPort}`,
+        });
+      }
+    });
+  });
+}
 
 interface Program {
   name: string;
   path: string;
-  type: "nodejs" | "python";
+  type: "nodejs" | "python" | "html";
   description?: string;
   main?: string;
 }
@@ -14,8 +92,11 @@ interface Program {
 interface RunningProgram {
   id: string;
   name: string;
-  process: ChildProcess;
+  process?: ChildProcess;
   terminal: string[];
+  type?: "nodejs" | "python" | "html";
+  server?: any;
+  url?: string;
 }
 
 class ProgramManager {
@@ -80,6 +161,19 @@ class ProgramManager {
           };
         }
       }
+
+      // Check for HTML files
+      const htmlFiles = ["index.html", "index.htm"];
+      for (const fileName of htmlFiles) {
+        if (fs.existsSync(path.join(programPath, fileName))) {
+          return {
+            name,
+            path: programPath,
+            type: "html",
+            main: fileName,
+          };
+        }
+      }
     } catch (error) {
       console.error(`Fehler beim Analysieren von ${name}:`, error);
     }
@@ -89,6 +183,40 @@ class ProgramManager {
 
   async startProgram(program: Program): Promise<string> {
     const id = `${program.name}_${Date.now()}`;
+
+    // Handle HTML projects differently - they need a static server
+    if (program.type === "html") {
+      try {
+        const serverInfo = await createStaticServer(program.path);
+
+        const runningProgram: RunningProgram = {
+          id,
+          name: program.name,
+          server: serverInfo.server,
+          url: serverInfo.url,
+          terminal: [`[INFO] Static server started at ${serverInfo.url}`],
+          type: "html",
+        };
+
+        // Automatically open in browser
+        shell.openExternal(serverInfo.url);
+
+        this.sendToRenderer("program-output", {
+          id,
+          output: `Static server started at ${serverInfo.url}\nOpening in browser...\n`,
+          type: "stdout",
+        });
+
+        this.runningPrograms.set(id, runningProgram);
+        return id;
+      } catch (error: any) {
+        this.sendToRenderer("program-error", {
+          id,
+          error: `Failed to start server: ${error.message}`,
+        });
+        throw error;
+      }
+    }
 
     let command: string;
     let args: string[];
@@ -158,7 +286,17 @@ class ProgramManager {
   stopProgram(id: string): boolean {
     const program = this.runningPrograms.get(id);
     if (program) {
-      program.process.kill();
+      // Handle HTML server differently
+      if (program.type === "html" && program.server) {
+        program.server.close();
+        this.sendToRenderer("program-output", {
+          id,
+          output: `[INFO] Static server stopped\n`,
+          type: "stdout",
+        });
+      } else if (program.process) {
+        program.process.kill();
+      }
       this.runningPrograms.delete(id);
       return true;
     }
@@ -167,7 +305,18 @@ class ProgramManager {
 
   sendInput(id: string, input: string): boolean {
     const program = this.runningPrograms.get(id);
-    if (program && program.process.stdin) {
+
+    // HTML servers don't accept input
+    if (program && program.type === "html") {
+      this.sendToRenderer("program-output", {
+        id,
+        output: `[INFO] HTML server does not accept input. Server is running at ${program.url}\n`,
+        type: "info",
+      });
+      return false;
+    }
+
+    if (program && program.process && program.process.stdin) {
       program.process.stdin.write(input + "\n");
       program.terminal.push(`[INPUT] ${input}`);
       return true;
@@ -215,7 +364,7 @@ function createWindow() {
 
   // Load the app
   if (process.env.NODE_ENV === "development") {
-    mainWindow.loadURL("http://localhost:5173");
+    mainWindow.loadURL("http://localhost:5176");
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));

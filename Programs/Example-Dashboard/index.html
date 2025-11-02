@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stream Dashboard - Beispiel</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🎮 Stream Dashboard</h1>
+        <p class="subtitle">Beispiel für eine statische HTML-Anwendung</p>
+      </header>
+
+      <main class="dashboard">
+        <div class="card">
+          <h2>📊 Stream Statistics</h2>
+          <div class="stats">
+            <div class="stat">
+              <span class="number" id="viewers">1,234</span>
+              <span class="label">Viewers</span>
+            </div>
+            <div class="stat">
+              <span class="number" id="followers">5,678</span>
+              <span class="label">Followers</span>
+            </div>
+            <div class="stat">
+              <span class="number" id="uptime">02:45:12</span>
+              <span class="label">Uptime</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>💬 Recent Followers</h2>
+          <ul class="followers-list" id="followersList">
+            <li>xAkiitohFan123</li>
+            <li>StreamLover42</li>
+            <li>GamerGirl2025</li>
+            <li>TechNinja</li>
+            <li>CodeMaster99</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>🎵 Now Playing</h2>
+          <div class="now-playing">
+            <div class="song-info">
+              <div class="song-title">Electronic Dreams</div>
+              <div class="artist">Synthwave Artist</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress" style="width: 65%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🎯 Stream Goals</h2>
+          <div class="goals">
+            <div class="goal">
+              <span class="goal-label">Follower Goal</span>
+              <div class="progress-bar">
+                <div class="progress" style="width: 78%"></div>
+              </div>
+              <span class="goal-progress">780 / 1000</span>
+            </div>
+            <div class="goal">
+              <span class="goal-label">Donation Goal</span>
+              <div class="progress-bar">
+                <div class="progress" style="width: 45%"></div>
+              </div>
+              <span class="goal-progress">$45 / $100</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <p>
+          ✨ Dieses Dashboard läuft auf dem integrierten HTTP-Server von
+          xAkiitoh Program Executor
+        </p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

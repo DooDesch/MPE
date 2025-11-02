@@ -25,6 +25,13 @@ Ein moderner Programm-Launcher für xAkiitoh's Stream Tools, entwickelt mit Elec
 - Direkte Python-Ausführung
 - Beispiel: Stream-Analytics, Chat-Moderation, APIs
 
+### HTML/Static Websites
+
+- Automatische Erkennung von `index.html`
+- Integrierter HTTP-Server für lokales Hosting
+- Öffnet automatisch im Browser
+- Beispiel: Web-Apps, Dashboards, Dokumentation
+
 ## 🚀 Installation
 
 1. **Dependencies installieren:**
@@ -76,11 +83,21 @@ xAkiitohsMultipleProgramExecutor/
    ```
 
 2. **Python Programm:**
+
    ```
    Programs/MeinScript/
    ├── main.py              # Hauptdatei
    ├── requirements.txt     # Optional
    └── config/              # Weitere Dateien
+   ```
+
+3. **HTML/Static Website:**
+   ```
+   Programs/MeinWebsite/
+   ├── index.html           # Startseite
+   ├── style.css            # Stylesheets
+   ├── script.js            # JavaScript
+   └── assets/              # Bilder, Fonts, etc.
    ```
 
 ### Funktionen
