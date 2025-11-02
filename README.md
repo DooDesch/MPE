@@ -123,7 +123,97 @@ npm run dist         # Installer erstellen
 npm run dist:win     # Windows-spezifischer Build
 ```
 
-## 📝 Lizenz
+## � Troubleshooting
+
+### Release-Build Probleme
+
+Wenn der Release-Build (`npm run dist:win`) nach längerer Zeit nicht mehr funktioniert, können folgende Ursachen vorliegen:
+
+#### 1. Veraltete Dependencies
+
+```bash
+# Dependencies aktualisieren
+npm update
+
+# Oder komplett neu installieren
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### 2. Electron-Builder Cache leeren
+
+```bash
+# Windows
+rmdir /s "%APPDATA%\electron-builder"
+# Oder in PowerShell
+Remove-Item -Recurse -Force "$env:APPDATA\electron-builder"
+```
+
+#### 3. Node.js Version prüfen
+
+```bash
+# Aktuelle Node.js Version anzeigen
+node --version
+
+# Empfohlen: Node.js 18.x oder 20.x LTS
+```
+
+#### 4. Build-Dateien bereinigen
+
+```bash
+# Alte Build-Dateien löschen
+rm -rf dist release
+npm run build:vue
+npm run build:electron
+npm run dist:win
+```
+
+#### 5. Häufige Fehlermeldungen
+
+**"Cannot resolve dependency":**
+
+- `npm install --legacy-peer-deps`
+- Oder Dependencies in `package.json` aktualisieren
+
+**"Application entry file does not exist":**
+
+- `npm run build:electron` vor dem Dist-Build ausführen
+- Prüfen ob `electron/main.js` existiert
+
+**"NSIS error" oder "Code signing failed":**
+
+- Windows Defender/Antivirus temporär deaktivieren
+- Als Administrator ausführen
+
+#### 6. Komplette Neuinstallation
+
+```bash
+# Falls alles andere fehlschlägt
+rm -rf node_modules package-lock.json dist release
+npm cache clean --force
+npm install
+npm run dist:win
+```
+
+### Development Probleme
+
+#### Port bereits belegt
+
+```bash
+# Andere Prozesse auf Port 5176 beenden
+netstat -ano | findstr :5176
+taskkill /PID <PID> /F
+```
+
+#### Electron startet nicht
+
+```bash
+# Electron neu installieren
+npm uninstall electron
+npm install electron --save-dev
+```
+
+## �📝 Lizenz
 
 MIT License - Entwickelt für xAkiitoh's Stream
 
