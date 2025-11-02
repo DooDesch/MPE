@@ -6,8 +6,8 @@ import * as http from "http";
 import * as url from "url";
 import { UpdateService } from "./updateService";
 
-// Import about dialog from JavaScript file
-const { showAboutDialog } = require(path.join(__dirname, "about.js"));
+// Import about dialog from TypeScript file
+import { showAboutDialog } from "./about";
 
 // Simple MIME type lookup
 function getMimeType(filePath: string): string {

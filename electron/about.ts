@@ -1,11 +1,11 @@
-const { dialog } = require("electron");
-const path = require("path");
+import { dialog, BrowserWindow } from "electron";
+import * as path from "path";
 
 /**
  * Shows the About dialog for the application
- * @param {BrowserWindow} mainWindow - The main application window
+ * @param mainWindow - The main application window
  */
-function showAboutDialog(mainWindow) {
+export function showAboutDialog(mainWindow: BrowserWindow): void {
   try {
     const packageJson = require("../package.json");
     const currentYear = new Date().getFullYear();
@@ -14,10 +14,10 @@ function showAboutDialog(mainWindow) {
       type: "info",
       title: "About xAkiitoh Program Executor",
       message: "xAkiitoh Program Executor",
-      detail: `Version: ${packageJson.version}\n\nA multi-program execution environment for Node.js and Python applications.\n\nDeveloped with Electron, Vue.js and TypeScript.\n\n© ${currentYear} xAkiitoh`,
+      detail: `Version: ${packageJson.version}\n\nA multi-program execution environment for Node.js and Python applications.\n\nDeveloped with Electron, Vue.js and TypeScript.\n\n© ${currentYear} DooDesch`,
       buttons: ["OK"],
       defaultId: 0,
-      icon: null,
+      icon: undefined,
     });
   } catch (error) {
     console.error("Error showing about dialog:", error);
@@ -27,14 +27,10 @@ function showAboutDialog(mainWindow) {
       type: "info",
       title: "About xAkiitoh Program Executor",
       message: "xAkiitoh Program Executor",
-      detail: `A multi-program execution environment for Node.js and Python applications.\n\nDeveloped with Electron, Vue.js and TypeScript.\n\n© ${new Date().getFullYear()} xAkiitoh`,
+      detail: `A multi-program execution environment for Node.js and Python applications.\n\nDeveloped with Electron, Vue.js and TypeScript.\n\n© ${new Date().getFullYear()} DooDesch`,
       buttons: ["OK"],
       defaultId: 0,
-      icon: null,
+      icon: undefined,
     });
   }
 }
-
-module.exports = {
-  showAboutDialog,
-};

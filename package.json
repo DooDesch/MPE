@@ -9,8 +9,7 @@
     "dev:electron": "cross-env NODE_ENV=development electron .",
     "build": "npm run build:vue && npm run build:electron",
     "build:vue": "vite build",
-    "build:electron": "tsc -p tsconfig.electron.json && npm run copy:js",
-    "copy:js": "powershell \"Copy-Item 'electron\\*.js' 'dist\\electron\\' -Force\"",
+    "build:electron": "tsc -p tsconfig.electron.json",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "postinstall": "electron-builder install-app-deps"
