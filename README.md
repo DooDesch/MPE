@@ -279,9 +279,24 @@ npm uninstall electron
 npm install electron --save-dev
 ```
 
-## �📝 Lizenz
+## 📝 Lizenz
 
-MIT License - Entwickelt für xAkiitoh's Stream
+**Proprietäre Software** - Alle Rechte vorbehalten.
+
+Diese Software ist urheberrechtlich geschützt und darf ohne ausdrückliche Genehmigung nicht kopiert, modifiziert oder weitervertrieben werden. Siehe [LICENSE.txt](LICENSE.txt) für vollständige Lizenzbestimmungen.
+
+### Erlaubte Nutzung:
+
+- ✅ Download und Verwendung der Software
+- ✅ Issues und Bug Reports erstellen
+- ✅ Feature-Requests vorschlagen
+
+### Nicht erlaubt ohne Genehmigung:
+
+- ❌ Code kopieren oder klonen
+- ❌ Software modifizieren oder ableiten
+- ❌ Weitervertrieb oder kommerzielle Nutzung
+- ❌ Reverse Engineering
 
 ## 🤝 Support
 

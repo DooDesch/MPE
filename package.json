@@ -22,7 +22,7 @@
     "stream-tools"
   ],
   "author": "xAkiitoh Stream Tools",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.txt",
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@vitejs/plugin-vue": "^4.5.0",

@@ -1,0 +1,46 @@
+xAkiitoh Program Executor - Proprietäre Software-Lizenz
+
+Copyright (c) 2025 DooDesch. Alle Rechte vorbehalten.
+
+LIZENZBESTIMMUNGEN:
+
+1. GEWÄHRTE RECHTE
+   Diese Software wird ausschließlich zur NUTZUNG bereitgestellt.
+   
+   Sie dürfen:
+   ✓ Die Software herunterladen und installieren
+   ✓ Die Software für den vorgesehenen Zweck verwenden
+   ✓ Die Software auf Ihren eigenen Geräten ausführen
+
+2. BESCHRÄNKUNGEN
+   Sie dürfen NICHT ohne ausdrückliche schriftliche Genehmigung:
+   ✗ Den Quellcode kopieren, modifizieren oder ableiten
+   ✗ Die Software reverse-engineeren oder dekompilieren
+   ✗ Die Software weitervertreiben oder verkaufen
+   ✗ Teile der Software in eigenen Projekten verwenden
+   ✗ Die Software für kommerzielle Zwecke außerhalb der vorgesehenen Nutzung einsetzen
+   ✗ Das Repository klonen oder forken (außer für Issues/Bug Reports)
+
+3. ERLAUBTE INTERAKTIONEN
+   ✓ Issues erstellen und Bug Reports einreichen
+   ✓ Feature-Requests vorschlagen
+   ✓ An Diskussionen teilnehmen
+   ✓ Die Software für den persönlichen Gebrauch verwenden
+
+4. KEINE GEWÄHRLEISTUNG
+   Diese Software wird "wie sie ist" bereitgestellt, ohne jegliche Gewährleistung.
+   Der Autor übernimmt keine Haftung für Schäden durch die Nutzung.
+
+5. GENEHMIGUNGEN
+   Für Lizenzen zur Modifikation, Weiterverteilung oder kommerziellen Nutzung
+   kontaktieren Sie: doodesch@gmail.com
+
+6. RECHTSDURCHSETZUNG
+   Verstöße gegen diese Lizenz können rechtliche Schritte zur Folge haben.
+   Diese Lizenz unterliegt deutschem Recht.
+
+Durch die Nutzung dieser Software stimmen Sie diesen Bedingungen zu.
+
+---
+Erstellt: November 2025
+Autor: DooDesch

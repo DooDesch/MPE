@@ -17,6 +17,8 @@ export class UpdateService {
   private readonly GITHUB_API_URL = `https://api.github.com/repos/${this.REPO_OWNER}/${this.REPO_NAME}/releases/latest`;
   private readonly DEBUG_MODE = process.env.NODE_ENV === "development"; // Mock-Updates im Dev-Modus
 
+  // Kein Token nötig für public Repository
+
   async checkForUpdates(): Promise<{
     hasUpdate: boolean;
     currentVersion: string;
@@ -30,22 +32,13 @@ export class UpdateService {
       console.log(`[UpdateService] 📦 Current app version: ${currentVersion}`);
       console.log(`[UpdateService] 🌐 GitHub API URL: ${this.GITHUB_API_URL}`);
 
-      // Debug-Modus: Mock ein Update für Testing
-      if (this.DEBUG_MODE) {
-        console.log(
-          `[UpdateService] 🧪 DEBUG MODE: Simulating update available`
-        );
-        return {
-          hasUpdate: true,
-          currentVersion,
-          latestVersion: "1.2.0",
-          downloadUrl:
-            "https://github.com/DooDesch/MPE/releases/download/v1.2.0/setup.exe",
-          releaseNotes: "🧪 Debug Test Update - neue Features und Bugfixes",
-        };
-      }
+      // Prepare headers for public repository
+      const headers: Record<string, string> = {
+        "User-Agent": "xAkiitoh-Program-Executor",
+        Accept: "application/vnd.github.v3+json",
+      };
 
-      const response = await fetch(this.GITHUB_API_URL);
+      const response = await fetch(this.GITHUB_API_URL, { headers });
       console.log(
         `[UpdateService] 📡 API Response status: ${response.status} ${response.statusText}`
       );
@@ -54,6 +47,22 @@ export class UpdateService {
         console.error(
           `[UpdateService] ❌ Failed to fetch latest release: ${response.status} ${response.statusText}`
         );
+
+        // Debug-Fallback bei API-Fehler
+        if (this.DEBUG_MODE) {
+          console.log(
+            `[UpdateService] 🧪 DEBUG FALLBACK: API error (${response.status}), simulating update for testing`
+          );
+          return {
+            hasUpdate: true,
+            currentVersion,
+            latestVersion: "1.2.2",
+            downloadUrl: "https://github.com/DooDesch/MPE/releases/latest",
+            releaseNotes:
+              "🧪 Debug Fallback Update - Test nach API-Fehler (404)",
+          };
+        }
+
         return { hasUpdate: false, currentVersion };
       }
 
@@ -122,9 +131,40 @@ export class UpdateService {
       }
 
       console.log(`[UpdateService] 📤 No update needed, returning false`);
+
+      // Debug-Fallback: Mock ein Update wenn kein echtes gefunden wurde
+      if (this.DEBUG_MODE) {
+        console.log(
+          `[UpdateService] 🧪 DEBUG FALLBACK: No real update found, simulating one for testing`
+        );
+        return {
+          hasUpdate: true,
+          currentVersion,
+          latestVersion: "1.2.0",
+          downloadUrl: "https://github.com/DooDesch/MPE/releases/latest",
+          releaseNotes:
+            "🧪 Debug Fallback Update - Test für Update-Notification",
+        };
+      }
+
       return { hasUpdate: false, currentVersion };
     } catch (error) {
       console.error(`[UpdateService] 💥 Error checking for updates:`, error);
+
+      // Debug-Fallback auch bei Fehlern
+      if (this.DEBUG_MODE) {
+        console.log(
+          `[UpdateService] 🧪 DEBUG FALLBACK: Error occurred, simulating update for testing`
+        );
+        return {
+          hasUpdate: true,
+          currentVersion: app.getVersion(),
+          latestVersion: "1.2.0",
+          downloadUrl: "https://github.com/DooDesch/MPE/releases/latest",
+          releaseNotes: "🧪 Debug Fallback Update - Test nach API-Fehler",
+        };
+      }
+
       return { hasUpdate: false, currentVersion: app.getVersion() };
     }
   }
