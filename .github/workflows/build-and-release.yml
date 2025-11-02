@@ -1,0 +1,50 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - run: npm ci
+    - run: npm run build
+    
+    - name: Bump version
+      id: version
+      run: |
+        $pkg = Get-Content package.json | ConvertFrom-Json
+        $current = $pkg.version
+        $parts = $current.Split('.')
+        $new = "$($parts[0]).$($parts[1]).$([int]$parts[2] + 1)"
+        
+        $pkg.version = $new
+        $pkg | ConvertTo-Json -Depth 100 | Set-Content package.json
+        
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add package.json
+        git commit -m "bump version to $new"
+        git push
+        git tag "v$new"
+        git push --tags
+        
+        echo "new_version=$new" >> $env:GITHUB_OUTPUT
+    
+    - name: Build Windows installer
+      run: npm run dist:win
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.new_version }}
+        files: release/${{ steps.version.outputs.new_version }}/*.exe

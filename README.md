@@ -51,6 +51,28 @@ Ein moderner Programm-Launcher für xAkiitoh's Stream Tools, entwickelt mit Elec
    npm run dist:win
    ```
 
+## 🤖 Automatische Releases
+
+Das Projekt verwendet **GitHub Actions** für automatische Releases:
+
+### 🚀 **Release-Prozess**
+
+- **Push auf `main`** → Automatischer Release
+- **Version wird automatisch erhöht** (`1.1.0` → `1.1.1`)
+- **Windows Installer wird erstellt** und als Release verfügbar gemacht
+- **Git Tag wird automatisch erstellt** (`v1.1.1`)
+
+### 📦 **Download**
+
+Neueste Releases sind verfügbar unter:
+**[GitHub Releases](https://github.com/DooDesch/MPE/releases)**
+
+### 🏷️ **Versionierung**
+
+- **Semantic Versioning**: `MAJOR.MINOR.PATCH`
+- **Automatisches Patch-Increment** bei jedem Main-Push
+- **Manuelle Major/Minor-Updates** durch Bearbeitung der `package.json`
+
 ## 📁 Projekt-Struktur
 
 ```
