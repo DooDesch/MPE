@@ -42,9 +42,10 @@ import StatusBar from "./components/StatusBar.vue";
 interface Program {
   name: string;
   path: string;
-  type: "nodejs" | "python";
+  type: "nodejs" | "python" | "html";
   description?: string;
   main?: string;
+  port?: number;
 }
 
 interface RunningProgram {

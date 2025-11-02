@@ -2,7 +2,7 @@
   "name": "xakiitoh-program-executor",
   "version": "1.0.8",
   "description": "Ein moderner Programm-Launcher für xAkiitoh's Stream Tools",
-  "main": "electron/main.js",
+  "main": "dist/electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:vue\" \"wait-on http://localhost:5176 && npm run dev:electron\"",
     "dev:vue": "vite --port 5176 --host",

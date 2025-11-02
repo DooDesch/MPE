@@ -97,8 +97,35 @@ xAkiitohsMultipleProgramExecutor/
    ├── index.html           # Startseite
    ├── style.css            # Stylesheets
    ├── script.js            # JavaScript
+   ├── server.json          # Optional: Port-Konfiguration
    └── assets/              # Bilder, Fonts, etc.
    ```
+
+#### Port-Konfiguration für HTML-Projekte
+
+Es gibt mehrere Möglichkeiten, einen festen Port zu definieren:
+
+1. **server.json** (empfohlen):
+
+   ```json
+   {
+     "port": 8080,
+     "description": "My web app on fixed port"
+   }
+   ```
+
+2. **package.json**:
+
+   ```json
+   {
+     "name": "my-web-app",
+     "server": {
+       "port": 8080
+     }
+   }
+   ```
+
+3. **Automatisch**: Ohne Konfiguration wird ein konsistenter Port basierend auf dem Projektnamen generiert (8000-8999)
 
 ### Funktionen
 

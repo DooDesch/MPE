@@ -23,7 +23,15 @@
             <div class="program-header">
               <h3 class="program-name">{{ program.name }}</h3>
               <span class="program-type" :class="program.type">
-                {{ program.type === "nodejs" ? "Node.js" : "Python" }}
+                {{
+                  program.type === "nodejs"
+                    ? "Node.js"
+                    : program.type === "python"
+                    ? "Python"
+                    : program.type === "html"
+                    ? "HTML"
+                    : program.type
+                }}
               </span>
             </div>
             <p v-if="program.description" class="program-description">
@@ -139,9 +147,10 @@
 interface Program {
   name: string;
   path: string;
-  type: "nodejs" | "python";
+  type: "nodejs" | "python" | "html";
   description?: string;
   main?: string;
+  port?: number;
 }
 
 interface RunningProgram {
@@ -255,6 +264,11 @@ const isProgramRunning = (programName: string) => {
 .program-type.python {
   background: rgba(59, 130, 246, 0.2);
   color: #3b82f6;
+}
+
+.program-type.html {
+  background: rgba(249, 115, 22, 0.2);
+  color: #f97316;
 }
 
 .program-description {

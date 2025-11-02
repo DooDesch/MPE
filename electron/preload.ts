@@ -3,9 +3,10 @@ import { contextBridge, ipcRenderer } from "electron";
 export interface Program {
   name: string;
   path: string;
-  type: "nodejs" | "python";
+  type: "nodejs" | "python" | "html";
   description?: string;
   main?: string;
+  port?: number;
 }
 
 export interface RunningProgram {

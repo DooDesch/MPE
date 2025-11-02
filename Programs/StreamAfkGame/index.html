@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>xAkiitoh - Chat Arena</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="./assets/main-Bf-poA-T.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/main-AfRArKw3.css">
+  </head>
+  <body>
+    <div class="game-container">
+      <div class="header">
+        <h1 class="title">xAkiitoh's Chat Arena</h1>
+        <div class="status-bar">
+          <div class="connection-status" id="connectionStatus">
+            <span class="status-dot"></span>
+            <span>Verbinde...</span>
+          </div>
+          <div class="wave-counter">
+            <span>Wave: </span>
+            <span id="waveNumber">1</span>
+          </div>
+          <div class="wave-timer">
+            <span>Nächste Wave in: </span>
+            <span id="waveTimer">60s</span>
+          </div>
+          <div class="active-viewers">
+            <span>Aktive Kämpfer: </span>
+            <span id="activeViewers">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-arena">
+        <div class="battlefield" id="battlefield">
+          <div class="energy-field"></div>
+          <div class="center-crystal">
+            <div class="crystal-core"></div>
+            <div class="crystal-glow"></div>
+          </div>
+        </div>
+
+        <div class="leaderboard">
+          <h3>Top Kämpfer</h3>
+          <div class="leaderboard-list" id="leaderboard">
+            <!-- Dynamisch gefüllt -->
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-integration">
+        <div class="chat-commands">
+          <h3>Wie es funktioniert</h3>
+          <div class="command-list">
+            <div class="command">
+              <code>Einfach chatten!</code> - Jede Nachricht bringt dich ins Spiel
+            </div>
+            <div class="command"><code>Mehr chatten = stärker!</code> - Aktivität bringt Boni</div>
+            <div class="command"><code>!defend</code> - Aktiviere Verteidigung (optional)</div>
+            <div class="command"><code>!power</code> - Lade Spezialattacke auf (optional)</div>
+            <div class="command"><code>!heal</code> - Heile dich (optional)</div>
+          </div>
+        </div>
+
+        <div class="recent-actions">
+          <h3>Letzte Aktionen</h3>
+          <div class="action-feed" id="actionFeed">
+            <!-- Dynamisch gefüllt -->
+          </div>
+        </div>
+      </div>
+
+      <div class="game-effects">
+        <div class="particles" id="particles"></div>
+        <div class="screen-shake" id="screenShake"></div>
+      </div>
+    </div>
+
+    <div class="config-panel" id="configPanel">
+      <h3>Konfiguration</h3>
+      <div class="config-section">
+        <label for="channelName">Twitch Channel:</label>
+        <input type="text" id="channelName" value="xAkiitoh" readonly />
+      </div>
+      <div class="config-section">
+        <label for="gameMode">Spiel-Modus:</label>
+        <select id="gameMode">
+          <option value="endless" selected>Endless Mode</option>
+          <option value="tournament">Turnier Modus</option>
+        </select>
+      </div>
+      <div class="config-section">
+        <button id="startGame" class="start-btn">Spiel Starten</button>
+        <button id="stopGame" class="stop-btn">Spiel Stoppen</button>
+      </div>
+    </div>
+
+    <!-- Load main application - all modules are imported via ES modules -->
+
+  </body>
+</html>

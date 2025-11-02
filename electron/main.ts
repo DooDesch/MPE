@@ -28,6 +28,55 @@ function getMimeType(filePath: string): string {
   return mimeTypes[ext] || "text/plain";
 }
 
+// Get configured port for HTML project
+function getConfiguredPort(projectPath: string, projectName: string): number {
+  // Try to read server.json first
+  const serverJsonPath = path.join(projectPath, "server.json");
+  if (fs.existsSync(serverJsonPath)) {
+    try {
+      const serverConfig = JSON.parse(fs.readFileSync(serverJsonPath, "utf8"));
+      if (serverConfig.port && typeof serverConfig.port === "number") {
+        console.log(
+          `Found port ${serverConfig.port} in server.json for ${projectName}`
+        );
+        return serverConfig.port;
+      }
+    } catch (error) {
+      console.warn(`Error reading server.json for ${projectName}:`, error);
+    }
+  }
+
+  // Try to read package.json
+  const packageJsonPath = path.join(projectPath, "package.json");
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+      if (
+        packageJson.server?.port &&
+        typeof packageJson.server.port === "number"
+      ) {
+        console.log(
+          `Found port ${packageJson.server.port} in package.json for ${projectName}`
+        );
+        return packageJson.server.port;
+      }
+    } catch (error) {
+      console.warn(`Error reading package.json for ${projectName}:`, error);
+    }
+  }
+
+  // Generate consistent port based on project name hash (8000-8999 range)
+  let hash = 0;
+  for (let i = 0; i < projectName.length; i++) {
+    const char = projectName.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  const port = 8000 + (Math.abs(hash) % 1000);
+  console.log(`Generated consistent port ${port} for ${projectName}`);
+  return port;
+}
+
 // Simple HTTP server for static HTML files
 function createStaticServer(
   rootPath: string,
@@ -87,6 +136,7 @@ interface Program {
   type: "nodejs" | "python" | "html";
   description?: string;
   main?: string;
+  port?: number;
 }
 
 interface RunningProgram {
@@ -133,10 +183,12 @@ class ProgramManager {
     name: string,
     programPath: string
   ): Promise<Program | null> {
+    console.log(`Analyzing program: ${name} at ${programPath}`);
     try {
       // Check for package.json (Node.js)
       const packageJsonPath = path.join(programPath, "package.json");
       if (fs.existsSync(packageJsonPath)) {
+        console.log(`Found Node.js project: ${name}`);
         const packageJson = JSON.parse(
           fs.readFileSync(packageJsonPath, "utf8")
         );
@@ -153,6 +205,7 @@ class ProgramManager {
       const pythonFiles = ["server.py", "main.py", "app.py", "run.py"];
       for (const fileName of pythonFiles) {
         if (fs.existsSync(path.join(programPath, fileName))) {
+          console.log(`Found Python project: ${name}`);
           return {
             name,
             path: programPath,
@@ -163,17 +216,25 @@ class ProgramManager {
       }
 
       // Check for HTML files
+      console.log(`Checking for HTML files in: ${name}`);
       const htmlFiles = ["index.html", "index.htm"];
       for (const fileName of htmlFiles) {
-        if (fs.existsSync(path.join(programPath, fileName))) {
+        const htmlFilePath = path.join(programPath, fileName);
+        console.log(`Checking: ${htmlFilePath}`);
+        if (fs.existsSync(htmlFilePath)) {
+          console.log(`Found HTML project: ${name} with file ${fileName}`);
+          const port = getConfiguredPort(programPath, name);
           return {
             name,
             path: programPath,
             type: "html",
             main: fileName,
+            port: port,
           };
         }
       }
+
+      console.log(`No recognized project type found for: ${name}`);
     } catch (error) {
       console.error(`Fehler beim Analysieren von ${name}:`, error);
     }
@@ -187,14 +248,18 @@ class ProgramManager {
     // Handle HTML projects differently - they need a static server
     if (program.type === "html") {
       try {
-        const serverInfo = await createStaticServer(program.path);
+        const port =
+          program.port || getConfiguredPort(program.path, program.name);
+        const serverInfo = await createStaticServer(program.path, port);
 
         const runningProgram: RunningProgram = {
           id,
           name: program.name,
           server: serverInfo.server,
           url: serverInfo.url,
-          terminal: [`[INFO] Static server started at ${serverInfo.url}`],
+          terminal: [
+            `[INFO] Static server started at ${serverInfo.url} (configured port: ${port})`,
+          ],
           type: "html",
         };
 
@@ -203,7 +268,7 @@ class ProgramManager {
 
         this.sendToRenderer("program-output", {
           id,
-          output: `Static server started at ${serverInfo.url}\nOpening in browser...\n`,
+          output: `Static server started at ${serverInfo.url} (port: ${port})\nOpening in browser...\n`,
           type: "stdout",
         });
 
