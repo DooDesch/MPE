@@ -1,4 +1,4 @@
-# xAkiitoh Program Executor
+# Multi Program Executor
 
 Ein moderner Programm-Launcher für Node.js, Python und HTML-Anwendungen mit integrierter Terminal-Ausgabe und HTTP-Server.
 

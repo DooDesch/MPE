@@ -21,7 +21,7 @@
     "launcher",
     "stream-tools"
   ],
-  "author": "xAkiitoh Stream Tools",
+  "author": "DooDesch",
   "license": "SEE LICENSE IN LICENSE.txt",
   "devDependencies": {
     "@types/node": "^20.10.0",
