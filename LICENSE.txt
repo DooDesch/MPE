@@ -1,4 +1,4 @@
-xAkiitoh Program Executor - Proprietäre Software-Lizenz
+Multi Program Executor - Proprietäre Software-Lizenz
 
 Copyright (c) 2025 DooDesch. Alle Rechte vorbehalten.
 
