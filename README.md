@@ -1,5 +1,8 @@
 # Multi Program Executor
 
+> 🛟 **Need help or found a bug?** Get support at [support.doodesch.de](https://support.doodesch.de).
+
+
 Ein moderner Programm-Launcher für Node.js, Python und HTML-Anwendungen mit integrierter Terminal-Ausgabe und HTTP-Server.
 
 ## Features
